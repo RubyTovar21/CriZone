@@ -4,59 +4,103 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRIZONE NL (Crime Zone)</title>
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; }
     #map { width: 100%; height: 100%; }
+
+    /* Logo y título */
+    .header-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.9);
+      padding: 10px 15px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .header-container img {
+      height: 60px;
+      margin-right: 10px;
+    }
+    .header-container h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      font-family: sans-serif;
+    }
   </style>
 </head>
 <body>
-  <div id="map"></div>
-  <script>
-    const map = L.map('map').setView([25.6866, -100.3161], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    const csvUrl = "https://raw.githubusercontent.com/RubyTovar21/CriZone/main/datos.csv";
+<div class="header-container">
+  <img src="https://raw.githubusercontent.com/RubyTovar21/LogoCosme/88b31dd704f9bf6c744681cf4e97bf2fdcc54b0a/LOGO%20CONMET.png" alt="CRIZONE NL">
+  <h1>CRIZONE NL (Crime Zone)</h1>
+</div>
 
-    fetch(csvUrl)
-      .then(response => response.text())
-      .then(data => {
-        const parsed = Papa.parse(data, { header: true, skipEmptyLines: true });
-        parsed.data.forEach(row => {
-          const lat = parseFloat(row.LATITUD);
-          const lng = parseFloat(row.LONGITUD);
-          const intensity = parseFloat(row.INTENSIDAD);
-          const classification = row.CLASIFICACION.trim();
-          const title = row["TITULO DE LA NOTA"].trim();
+<div id="map"></div>
 
-          if (!isNaN(lat) && !isNaN(lng)) {
-            const icon = L.divIcon({
-              className: 'leaflet-div-icon',
-              html: <span style="font-size: 20px;">${getEmojiForClassification(classification)}</span>,
-              iconSize: [30, 30]
-            });
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- PapaParse JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-            const marker = L.marker([lat, lng], { icon }).addTo(map);
-            marker.bindPopup(<b>${title}</b><br><i>${classification}</i><br><b>Intensidad:</b> ${intensity});
-          }
-        });
-      })
-      .catch(error => console.error('Error al cargar el CSV:', error));
+<script>
+  // Inicializar mapa centrado en Monterrey
+  const map = L.map('map').setView([25.6866, -100.3161], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
 
-    function getEmojiForClassification(classification) {
-      const emojis = {
-        'Homicidios': '💀',
-        'Atentados': '🔥',
-        'Detenciones': '🚔',
-        'Hallazgos': '🕵️',
-        'Otros': '📌',
-        'Enfrentamientos vs autoridades': '⚔️',
-        'Atentados Vs Negocios': '🏢'
-      };
-      return emojis[classification] || '📍';
+  // CSV raw en GitHub
+  const csvUrl = "https://raw.githubusercontent.com/RubyTovar21/CriZone/main/datos.csv";
+
+  // Función para asignar emojis según clasificación
+  function getEmojiForClassification(classification) {
+    const emojis = {
+      'Homicidios': '💀',
+      'Atentados': '🔥',
+      'Detenciones': '🚔',
+      'Hallazgos': '🕵️',
+      'Otros': '📌',
+      'Enfrentamientos vs autoridades': '⚔️',
+      'Atentados Vs Negocios': '🏢'
+    };
+    return emojis[classification] || '📍';
+  }
+
+  // Cargar CSV y colocar marcadores
+  Papa.parse(csvUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      results.data.forEach(row => {
+        const lat = parseFloat(row.LATITUD);
+        const lng = parseFloat(row.LONGITUD);
+        const title = row["TITULO DE LA NOTA"]?.trim() || 'Sin título';
+        const classification = row.CLASIFICACION?.trim() || 'Otros';
+        const intensity = row.INTENSIDAD || '';
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const icon = L.divIcon({
+            className: '',
+            html: <div style="font-size: 24px;">${getEmojiForClassification(classification)}</div>,
+            iconSize: [30,30]
+          });
+          const marker = L.marker([lat, lng], { icon }).addTo(map);
+          marker.bindPopup(<b>${title}</b><br><i>${classification}</i><br><b>Intensidad:</b> ${intensity});
+        }
+      });
+    },
+    error: function(err) {
+      console.error("Error al cargar CSV:", err);
     }
-  </script>
+  });
+</script>
+
 </body>
 </html>

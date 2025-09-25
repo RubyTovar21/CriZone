@@ -5,90 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRIZONE NL (Crime Zone)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
-    html, body { margin:0; padding:0; height:100%; }
-    #map { width:100%; height:100%; }
-
-    .logo-container {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 999;
-      background: rgba(255,255,255,0.9);
-      padding: 8px 12px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .logo-container img {
-      height: 80px;
-      max-width: 150px;
-    }
-
-    .popup-link {
-      color: #0056b3;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .popup-link:hover {
-      text-decoration: underline;
-    }
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
+  <div id="map"></div>
+  <script>
+    const map = L.map('map').setView([25.6866, -100.3161], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-<div class="logo-container">
-  <img src="https://raw.githubusercontent.com/RubyTovar21/LogoCosme/88b31dd704f9bf6c744681cf4e97bf2fdcc54b0a/LOGO%20CONMET.png" alt="4R Consultores">
-</div>
+    const csvUrl = "https://raw.githubusercontent.com/RubyTovar21/CriZone/main/datos.csv";
 
-<div id="map"></div>
+    fetch(csvUrl)
+      .then(response => response.text())
+      .then(data => {
+        const parsed = Papa.parse(data, { header: true, skipEmptyLines: true });
+        parsed.data.forEach(row => {
+          const lat = parseFloat(row.LATITUD);
+          const lng = parseFloat(row.LONGITUD);
+          const intensity = parseFloat(row.INTENSIDAD);
+          const classification = row.CLASIFICACION.trim();
+          const title = row["TITULO DE LA NOTA"].trim();
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script>
-  const map = L.map('map').setView([25.6866, -100.3161], 11);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const icon = L.divIcon({
+              className: 'leaflet-div-icon',
+              html: <span style="font-size: 20px;">${getEmojiForClassification(classification)}</span>,
+              iconSize: [30, 30]
+            });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
+            const marker = L.marker([lat, lng], { icon }).addTo(map);
+            marker.bindPopup(<b>${title}</b><br><i>${classification}</i><br><b>Intensidad:</b> ${intensity});
+          }
+        });
+      })
+      .catch(error => console.error('Error al cargar el CSV:', error));
 
-  // CSV local en el mismo repositorio
-  const csvUrl = "https://raw.githubusercontent.com/RubyTovar21/CriZone/main/datos.csv";
-
-  function getEmoji(tipo) {
-    switch(tipo.toLowerCase()) {
-      case 'robo': return '💰';
-      case 'asalto': return '🔫';
-      case 'fuga': return '🏃';
-      default: return '📍';
+    function getEmojiForClassification(classification) {
+      const emojis = {
+        'Homicidios': '💀',
+        'Atentados': '🔥',
+        'Detenciones': '🚔',
+        'Hallazgos': '🕵️',
+        'Otros': '📌',
+        'Enfrentamientos vs autoridades': '⚔️',
+        'Atentados Vs Negocios': '🏢'
+      };
+      return emojis[classification] || '📍';
     }
-  }
-
-  Papa.parse(csvUrl, {
-    download: true,
-    header: true,
-    complete: function(results) {
-      results.data.forEach(row => {
-        if(row.Latitud && row.Longitud){
-          const lat = parseFloat(row.Latitud);
-          const lng = parseFloat(row.Longitud);
-          const desc = row.Descripcion || 'Sin descripción';
-          const link = row.Link || '';
-          const tipo = row.Tipo || '';
-
-          const emojiIcon = L.divIcon({ className:'', html:<div style="font-size:24px;">${getEmoji(tipo)}</div> });
-          const marker = L.marker([lat, lng], { icon: emojiIcon }).addTo(map);
-
-          let popupContent = <strong>${desc}</strong>;
-          if(link) popupContent += <br><a href="${link}" target="_blank" class="popup-link">Ver más</a>;
-          marker.bindPopup(popupContent);
-        }
-      });
-    }
-  });
-</script>
-
+  </script>
 </body>
 </html>

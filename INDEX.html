@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRIZONE NL (Crime Zone)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body { margin:0; padding:0; height:100%; }
+    #map { width:100%; height:100%; }
+
+    .logo-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 999;
+      background: rgba(255,255,255,0.9);
+      padding: 8px 12px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .logo-container img {
+      height: 80px;
+      max-width: 150px;
+    }
+
+    .popup-link {
+      color: #0056b3;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .popup-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="logo-container">
+  <img src="https://raw.githubusercontent.com/RubyTovar21/LogoCosme/88b31dd704f9bf6c744681cf4e97bf2fdcc54b0a/LOGO%20CONMET.png" alt="4R Consultores">
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Inicializar mapa
+  const map = L.map('map').setView([25.6866, -100.3161], 11);
+
+  // Capa base
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Datos de marcadores fijos
+  const markers = [
+    { lat:25.6866, lng:-100.3161, desc:"Robo de vehículo", link:"https://example.com" },
+    { lat:25.6970, lng:-100.32, desc:"Asalto a mano armada", link:"https://example.com" },
+    { lat:25.6900, lng:-100.30, desc:"Fuga de persona", link:"https://example.com" }
+  ];
+
+  // Agregar marcadores
+  markers.forEach(m => {
+    const emojiIcon = L.divIcon({ className:'', html:'<div style="font-size:24px;">📍</div>' });
+    const marker = L.marker([m.lat, m.lng], { icon: emojiIcon }).addTo(map);
+    let popupContent = <strong>${m.desc}</strong>;
+    if(m.link) popupContent += <br><a href="${m.link}" target="_blank" class="popup-link">Ver más</a>;
+    marker.bindPopup(popupContent);
+  });
+</script>
+
+</body>
+</html>

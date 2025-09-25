@@ -45,8 +45,6 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<!-- PapaParse JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <script>
   // Inicializar mapa centrado en Monterrey
@@ -55,8 +53,13 @@
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // CSV raw en GitHub
-  const csvUrl = "https://raw.githubusercontent.com/RubyTovar21/CriZone/main/datos.csv";
+  // Datos incrustados directamente (ejemplo, reemplaza con tus datos reales)
+  const datos = [
+    {LATITUD: 25.6866, LONGITUD: -100.3161, INTENSIDAD: 5, CLASIFICACION: "Homicidios", "TITULO DE LA NOTA": "Homicidio en Monterrey"},
+    {LATITUD: 25.695, LONGITUD: -100.315, INTENSIDAD: 3, CLASIFICACION: "Detenciones", "TITULO DE LA NOTA": "Detención en Escobedo"},
+    {LATITUD: 25.68, LONGITUD: -100.32, INTENSIDAD: 4, CLASIFICACION: "Atentados", "TITULO DE LA NOTA": "Atentado en San Pedro"}
+    // ... agrega aquí todos tus registros
+  ];
 
   // Función para asignar emojis según clasificación
   function getEmojiForClassification(classification) {
@@ -72,32 +75,22 @@
     return emojis[classification] || '📍';
   }
 
-  // Cargar CSV y colocar marcadores
-  Papa.parse(csvUrl, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      results.data.forEach(row => {
-        const lat = parseFloat(row.LATITUD);
-        const lng = parseFloat(row.LONGITUD);
-        const title = row["TITULO DE LA NOTA"]?.trim() || 'Sin título';
-        const classification = row.CLASIFICACION?.trim() || 'Otros';
-        const intensity = row.INTENSIDAD || '';
+  // Colocar marcadores en el mapa
+  datos.forEach(row => {
+    const lat = parseFloat(row.LATITUD);
+    const lng = parseFloat(row.LONGITUD);
+    const title = row["TITULO DE LA NOTA"]?.trim() || 'Sin título';
+    const classification = row.CLASIFICACION?.trim() || 'Otros';
+    const intensity = row.INTENSIDAD || '';
 
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const icon = L.divIcon({
-            className: '',
-            html: <div style="font-size: 24px;">${getEmojiForClassification(classification)}</div>,
-            iconSize: [30,30]
-          });
-          const marker = L.marker([lat, lng], { icon }).addTo(map);
-          marker.bindPopup(<b>${title}</b><br><i>${classification}</i><br><b>Intensidad:</b> ${intensity});
-        }
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const icon = L.divIcon({
+        className: '',
+        html: <div style="font-size: 24px;">${getEmojiForClassification(classification)}</div>,
+        iconSize: [30,30]
       });
-    },
-    error: function(err) {
-      console.error("Error al cargar CSV:", err);
+      const marker = L.marker([lat, lng], { icon }).addTo(map);
+      marker.bindPopup(<b>${title}</b><br><i>${classification}</i><br><b>Intensidad:</b> ${intensity});
     }
   });
 </script>
